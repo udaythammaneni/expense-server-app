@@ -1,6 +1,9 @@
 const expressAsyncHandler = require("express-async-handler");
 
+const generateToken = require("../middlewares/generateToken");
+
 const User = require("../models/User");
+const { use } = require("../routes/usersRoute");
 
 /* const registerUser = (req, res)=>{
     res.json({ user:"admin" });
@@ -62,5 +65,25 @@ const fetchUsers = expressAsyncHandler(async (req, res) => {
     }
 });
 
+//login user
+const loginUserCtrl = expressAsyncHandler(async (req, res) => {
+    const {email, password} = req?.body;
+    const userFound  = await User.findOne({email});
+    if(userFound && (await userFound?.isPasswordMatch(password))){
+        // res.json(userFound);
+        res.json({
+            _id: userFound?._id,
+            firstname:userFound?.firstname,
+            token: generateToken(userFound?._id)
+        });
+    }else{
+        res.status(401);
+        throw new Error("Invalid login credentials");
+    }
+    //Can not set headers after they are sent to the client
+    // res.status(401);
+    // throw new Error("Invalid login credentials");
+})
+
 // module.exports = {register:registerUser}
-module.exports = {registerUser, fetchUsers}
+module.exports = {registerUser, fetchUsers, loginUserCtrl}
